@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mylar - Automatically Generate series.json
 // @namespace    https://github.com/Sporkyy/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Automatically generate missing series.json files
 // @author       Sporkyy
 // @match        *://localhost:8090/comicDetails*
