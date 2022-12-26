@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mylar - Automatically Generate series.json
 // @namespace    https://github.com/Sporkyy/
-// @version      1.0.1
+// @version      1.0.3
 // @description  Automatically generate missing series.json files
 // @author       Sporkyy
 // @match        *://localhost:8090/comicDetails*
@@ -15,23 +15,49 @@
 
   // Common options to configure
   // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-  const sRC = 10;
-  const sRW = 30;
+  const secRefresh = 30; // Seconds to wait before refreshing the window
   // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-  const qs = (s, c = document) => c.querySelector(s);
+  // Emulate the jQuery/Browser Console `$` function
+  const $ = (sel, ctx = document) => ctx.querySelector(sel);
 
-  const hasSJ = !!qs('span[title^="series.json located"]');
-  const mlr = qs('#menu_link_refresh');
-
-  if (!hasSJ) {
-    console.log(`series.json MISSING, generating in ${sRC} seconds...`);
-    window.setTimeout(() => {
-      mlr.click();
-      console.log(`Refreshing window in ${sRW} seconds...`);
-      window.setTimeout(() => window.location.reload(), sRC * 1000);
-    }, sRC * 1000);
-  } else {
-    console.log('series.json FOUND, doing nothing');
+  // If the page didn't load correctly, give up
+  if (!!!$('#seriesheader')) {
+    console.log('Something went wrong; doing nothing');
+    return;
   }
+
+  const updateComicInfo = () => {
+    // The "series.json" link in the "Comic Details" box
+    const elSeriesJson = $('a[onclick*="update_metadata?comicid"]');
+    // The "❃ (Comic Information is currently being loaded)" message
+    const elSeriesStatus = $('#series_status');
+    // The "🔄 Refresh Comic" button
+    const elRefreshComic = $('#menu_link_refresh');
+
+    const isComicInfoLoading = `${elSeriesStatus?.innerText}`.includes(
+      'currently being loaded',
+    );
+
+    if (isComicInfoLoading) {
+      console.log('Comic info is LOADING');
+      console.log(`Window refresh in ${secRefresh} seconds`);
+      setTimeout(() => window.location.reload(), secRefresh * 1000);
+      return;
+    }
+
+    const hasSJ = !!$('span[title^="series.json located"]', elSeriesJson);
+
+    if (!hasSJ) {
+      console.log(`series.json MISSING; refreshing comic`);
+      elRefreshComic.click();
+      console.log(`Window refresh in ${secRefresh} seconds`);
+      window.setTimeout(() => window.location.reload(), secRefresh * 1000);
+    } else {
+      console.log('series.json FOUND; doing nothing');
+    }
+  };
+
+  // Wait 3s before doing anything
+  setTimeout(updateComicInfo, 3 * 1000);
 })();
